@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,11 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   StatusBar,
+  Alert,
 } from 'react-native';
+import { Audio, AVPlaybackStatus } from 'expo-av';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -32,6 +36,81 @@ export default function ReadMemorizedScreen({ navigation, route }: Props) {
 
   const { isMemorized, getMemorizedCount } = useMemorizationContext();
   const memorizedCount = getMemorizedCount(surahNumber);
+
+  const [playingAyah, setPlayingAyah] = useState<number | null>(null);
+  const [loadingAyah, setLoadingAyah] = useState<number | null>(null);
+  const [downloadingAyah, setDownloadingAyah] = useState<number | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    return () => { stopAndUnload(); };
+  }, []);
+
+  const stopAndUnload = async () => {
+    if (soundRef.current) {
+      try {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+      } catch {}
+      soundRef.current = null;
+    }
+    setPlayingAyah(null);
+    setLoadingAyah(null);
+  };
+
+  const handlePlayPause = async (ayah: { number: number; numberInSurah: number }) => {
+    const url = `https://cdn.islamic.network/quran/audio/128/ar.husary/${ayah.number}.mp3`;
+
+    if (playingAyah === ayah.number && soundRef.current) {
+      await soundRef.current.pauseAsync();
+      setPlayingAyah(null);
+      return;
+    }
+
+    await stopAndUnload();
+    setLoadingAyah(ayah.number);
+    try {
+      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: url },
+        { shouldPlay: true },
+        (status: AVPlaybackStatus) => {
+          if (status.isLoaded && status.didJustFinish) {
+            setPlayingAyah(null);
+          }
+        }
+      );
+      soundRef.current = sound;
+      setPlayingAyah(ayah.number);
+    } catch {
+      Alert.alert('Error', 'Could not load audio.');
+    } finally {
+      setLoadingAyah(null);
+    }
+  };
+
+  const handleDownload = async (ayah: { number: number; numberInSurah: number }) => {
+    const url = `https://cdn.islamic.network/quran/audio/128/ar.husary/${ayah.number}.mp3`;
+    setDownloadingAyah(ayah.number);
+    try {
+      const fileName = `surah_${surahNumber}_ayah_${ayah.numberInSurah}.mp3`;
+      const localUri = `${FileSystem.cacheDirectory}${fileName}`;
+      await FileSystem.downloadAsync(url, localUri);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(localUri, {
+          mimeType: 'audio/mpeg',
+          dialogTitle: `Save ${surahMeta.englishName} — Verse ${ayah.numberInSurah}`,
+          UTI: 'public.mp3',
+        });
+      } else {
+        Alert.alert('Downloaded', fileName);
+      }
+    } catch {
+      Alert.alert('Error', 'Could not download audio.');
+    } finally {
+      setDownloadingAyah(null);
+    }
+  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -124,6 +203,37 @@ export default function ReadMemorizedScreen({ navigation, route }: Props) {
                   </View>
                 </View>
                 <Text style={styles.arabicText}>{displayText}</Text>
+
+                <View style={styles.audioRow}>
+                  <TouchableOpacity
+                    style={styles.playBtn}
+                    onPress={() => handlePlayPause(arabic)}
+                    disabled={loadingAyah === arabic.number}
+                    activeOpacity={0.7}
+                  >
+                    {loadingAyah === arabic.number ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.playBtnText}>
+                        {playingAyah === arabic.number ? '⏸ Pause' : '▶ Play'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.downloadBtn}
+                    onPress={() => handleDownload(arabic)}
+                    disabled={downloadingAyah === arabic.number}
+                    activeOpacity={0.7}
+                  >
+                    {downloadingAyah === arabic.number ? (
+                      <ActivityIndicator size="small" color="#2e7d32" />
+                    ) : (
+                      <Text style={styles.downloadBtnText}>⬇ Download</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
                 <View style={styles.divider} />
                 <Text style={styles.translationLabel}>Translation</Text>
                 <Text style={styles.englishText}>{english?.text ?? ''}</Text>
@@ -257,6 +367,17 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     writingDirection: 'rtl',
   },
+  audioRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  playBtn: {
+    flex: 1, backgroundColor: '#2e7d32', borderRadius: 10,
+    paddingVertical: 10, alignItems: 'center', justifyContent: 'center', minHeight: 40,
+  },
+  playBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  downloadBtn: {
+    flex: 1, borderWidth: 1.5, borderColor: '#2e7d32', borderRadius: 10,
+    paddingVertical: 10, alignItems: 'center', justifyContent: 'center', minHeight: 40,
+  },
+  downloadBtnText: { color: '#2e7d32', fontWeight: '700', fontSize: 14 },
   divider: {
     height: 1,
     backgroundColor: '#e8f5e9',
