@@ -18,7 +18,7 @@ import { RouteProp } from '@react-navigation/native';
 import { useMemorizationContext } from '../context/MemorizationContext';
 import { SURAH_DATA } from '../data/surahData';
 import { QuranApiResponse, Ayah, RootStackParamList } from '../types';
-import { hasBismillahHeader, stripBismillah, BISMILLAH } from '../utils/bismillah';
+import { hasBismillahHeader, shouldStripBismillah, stripBismillah, BISMILLAH } from '../utils/bismillah';
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'ReadMemorized'>;
@@ -189,7 +189,7 @@ export default function ReadMemorizedScreen({ navigation, route }: Props) {
         ) : (
           memorizedAyahs.map((arabic) => {
             const english = englishAyahs[arabic.numberInSurah - 1];
-            const displayText = hasBismillahHeader(surahNumber) && arabic.numberInSurah === 1
+            const displayText = shouldStripBismillah(surahNumber) && arabic.numberInSurah === 1
               ? stripBismillah(arabic.text)
               : arabic.text;
             return (

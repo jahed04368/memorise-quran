@@ -17,7 +17,7 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 import { useMemorizationContext } from '../context/MemorizationContext';
 import { SURAH_DATA } from '../data/surahData';
 import { QuranApiResponse, Ayah, RootStackParamList } from '../types';
-import { hasBismillahHeader, stripBismillah, BISMILLAH } from '../utils/bismillah';
+import { hasBismillahHeader, shouldStripBismillah, stripBismillah, BISMILLAH } from '../utils/bismillah';
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'Verse'>;
@@ -254,7 +254,7 @@ export default function VerseScreen({ navigation, route }: Props) {
             </View>
 
             <Text style={styles.arabicText}>
-              {hasBismillahHeader(surahNumber) && currentArabic.numberInSurah === 1
+              {shouldStripBismillah(surahNumber) && currentArabic.numberInSurah === 1
                 ? stripBismillah(currentArabic.text)
                 : currentArabic.text}
             </Text>

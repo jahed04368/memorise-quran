@@ -1,9 +1,15 @@
 export const BISMILLAH = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
 
-// Surah 1 (Al-Fatiha): Bismillah IS verse 1 — don't show as a separate header.
 // Surah 9 (At-Tawba): no Bismillah at all.
-// All others: API prepends Bismillah to verse 1 text — strip it and show as header.
+// All others (including Al-Fatiha): show Bismillah as a header.
 export function hasBismillahHeader(surahNumber: number): boolean {
+  return surahNumber !== 9;
+}
+
+// Surah 1 (Al-Fatiha): Bismillah IS verse 1 — keep it in the verse text, don't strip.
+// Surah 9 (At-Tawba): no Bismillah.
+// All others: API prepends Bismillah to verse 1 text — strip it since it's shown as header.
+export function shouldStripBismillah(surahNumber: number): boolean {
   return surahNumber !== 1 && surahNumber !== 9;
 }
 
