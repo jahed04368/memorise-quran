@@ -10,6 +10,7 @@ import SurahListScreen from './src/screens/SurahListScreen';
 import VerseScreen from './src/screens/VerseScreen';
 import ReadMemorizedScreen from './src/screens/ReadMemorizedScreen';
 import MemorizedListScreen from './src/screens/MemorizedListScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import { MemorizationProvider } from './src/context/MemorizationContext';
 import { RootStackParamList } from './src/types';
 
@@ -53,6 +54,11 @@ export default function App() {
           name="MemorizedList"
           component={MemorizedListScreen}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: 'Settings' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

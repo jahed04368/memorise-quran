@@ -18,6 +18,7 @@ import { useMemorizationContext } from '../context/MemorizationContext';
 import { SURAH_DATA } from '../data/surahData';
 import { QuranApiResponse, Ayah, RootStackParamList } from '../types';
 import { hasBismillahHeader, shouldStripBismillah, stripBismillah, BISMILLAH } from '../utils/bismillah';
+import { getCachedSurah } from '../utils/offlineStorage';
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'Verse'>;
@@ -97,6 +98,12 @@ export default function VerseScreen({ navigation, route }: Props) {
     setLoading(true);
     setError(null);
     try {
+      const cached = await getCachedSurah(surahNumber);
+      if (cached) {
+        setArabicAyahs(cached[0].ayahs);
+        setEnglishAyahs(cached[1].ayahs);
+        return;
+      }
       const res = await fetch(
         `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,en.sahih`
       );

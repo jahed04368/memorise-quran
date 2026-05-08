@@ -76,7 +76,16 @@ export default function SurahListScreen({ navigation }: Props) {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Memorise Quran</Text>
-          <Text style={styles.headerArabic}>حفظ القرآن</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerArabic}>حفظ القرآن</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Settings')}
+              style={styles.settingsBtn}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.settingsIcon}>⚙</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.heroCard}>
@@ -147,6 +156,18 @@ const styles = StyleSheet.create({
   headerArabic: {
     color: '#a8d5b5',
     fontSize: 17,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingsBtn: {
+    padding: 4,
+  },
+  settingsIcon: {
+    fontSize: 20,
+    color: '#a8d5b5',
   },
   heroCard: {
     backgroundColor: 'rgba(255,255,255,0.08)',

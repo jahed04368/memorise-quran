@@ -1,0 +1,124 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1080px;height:1920px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0}
+.header{background:#1a3a2a;padding:60px 55px 39px}
+.htop{display:flex;align-items:center;margin-bottom:6px}
+.back{color:#a8d5b5;font-size:44px;margin-right:22px}
+.htitle{color:#fff;font-size:50px;font-weight:700}
+.statsrow{display:flex;gap:22px;margin-top:33px}
+.statbox{flex:1;border-radius:28px;padding:39px 16px;text-align:center}
+.statbox.white{background:#fff}
+.statbox.green{background:#4caf50}
+.statbox.amber{background:#ff8f00}
+.statnum{font-size:72px;font-weight:800;line-height:1;letter-spacing:-2px}
+.statbox.white .statnum{color:#1a1a1a}
+.statbox.green .statnum{color:#fff}
+.statbox.amber .statnum{color:#fff}
+.statlbl{font-size:26px;font-weight:500;margin-top:8px}
+.statbox.white .statlbl{color:#888}
+.statbox.green .statlbl{color:rgba(255,255,255,0.85)}
+.statbox.amber .statlbl{color:rgba(255,255,255,0.85)}
+.overallbar{height:16px;background:rgba(255,255,255,0.2);border-radius:8px;overflow:hidden;margin-top:33px}
+.overallfill{height:100%;background:#4caf50;border-radius:8px;width:12%}
+.overalltxt{color:rgba(255,255,255,0.6);font-size:28px;text-align:center;margin-top:16px}
+.list{padding:28px 33px}
+.row{background:#fff;border-radius:33px;padding:39px 44px;margin-bottom:22px;box-shadow:0 3px 8px rgba(0,0,0,0.06)}
+.rowtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.rname{font-size:42px;font-weight:600;color:#1a1a1a}
+.rarabic{font-size:39px;color:#2e7d32;font-weight:500}
+.rtrans{font-size:29px;color:#888;margin-top:6px}
+.rbar{height:12px;background:#e8f5e9;border-radius:6px;overflow:hidden;margin-top:16px}
+.rbarfill{height:100%;border-radius:6px;background:#81c784}
+.rbarfillC{background:#4caf50}
+.rbottom{display:flex;justify-content:space-between;margin-top:16px}
+.rpct{font-size:30px;color:#4caf50;font-weight:600}
+.rleft{font-size:30px;color:#ff8f00;font-weight:600}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="htop">
+    <span class="back">‹</span>
+    <span class="htitle">Memorised Verses</span>
+  </div>
+  <div class="statsrow">
+    <div class="statbox white">
+      <div class="statnum">87</div>
+      <div class="statlbl">memorised</div>
+    </div>
+    <div class="statbox green">
+      <div class="statnum">1%</div>
+      <div class="statlbl">of Quran</div>
+    </div>
+    <div class="statbox amber">
+      <div class="statnum">6149</div>
+      <div class="statlbl">remaining</div>
+    </div>
+  </div>
+  <div class="overallbar"><div class="overallfill"></div></div>
+  <div class="overalltxt">Keep going — every verse brings you closer</div>
+</div>
+<div class="list">
+  <div class="row">
+    <div class="rowtop">
+      <span class="rname">Al-Fatiha</span>
+      <span class="rarabic">الفاتحة</span>
+    </div>
+    <div class="rtrans">The Opening · 7 verses</div>
+    <div class="rbar"><div class="rbarfill rbarfillC" style="width:100%"></div></div>
+    <div class="rbottom">
+      <span class="rpct">100% completed</span>
+      <span style="font-size:30px;color:#4caf50;font-weight:600">✓ Complete</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="rowtop">
+      <span class="rname">Al-Baqarah</span>
+      <span class="rarabic">البقرة</span>
+    </div>
+    <div class="rtrans">The Cow · 286 verses</div>
+    <div class="rbar"><div class="rbarfill" style="width:28%"></div></div>
+    <div class="rbottom">
+      <span class="rpct">28% completed</span>
+      <span class="rleft">206 left</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="rowtop">
+      <span class="rname">Al-Ikhlas</span>
+      <span class="rarabic">الإخلاص</span>
+    </div>
+    <div class="rtrans">Sincerity · 4 verses</div>
+    <div class="rbar"><div class="rbarfill rbarfillC" style="width:100%"></div></div>
+    <div class="rbottom">
+      <span class="rpct">100% completed</span>
+      <span style="font-size:30px;color:#4caf50;font-weight:600">✓ Complete</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="rowtop">
+      <span class="rname">Al-Falaq</span>
+      <span class="rarabic">الفلق</span>
+    </div>
+    <div class="rtrans">The Daybreak · 5 verses</div>
+    <div class="rbar"><div class="rbarfill rbarfillC" style="width:100%"></div></div>
+    <div class="rbottom">
+      <span class="rpct">100% completed</span>
+      <span style="font-size:30px;color:#4caf50;font-weight:600">✓ Complete</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="rowtop">
+      <span class="rname">An-Nas</span>
+      <span class="rarabic">الناس</span>
+    </div>
+    <div class="rtrans">Mankind · 6 verses</div>
+    <div class="rbar"><div class="rbarfill rbarfillC" style="width:100%"></div></div>
+    <div class="rbottom">
+      <span class="rpct">100% completed</span>
+      <span style="font-size:30px;color:#4caf50;font-weight:600">✓ Complete</span>
+    </div>
+  </div>
+</div>
+</body></html>

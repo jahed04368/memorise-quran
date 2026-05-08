@@ -32,4 +32,5 @@ export type RootStackParamList = {
   Verse: { surahNumber: number };
   ReadMemorized: { surahNumber: number };
   MemorizedList: undefined;
+  Settings: undefined;
 };
