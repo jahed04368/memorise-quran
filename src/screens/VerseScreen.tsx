@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
+  TextInput,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
@@ -13,8 +14,6 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Audio, AVPlaybackStatus } from 'expo-av';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
 import { useMemorizationContext } from '../context/MemorizationContext';
 import { SURAH_DATA } from '../data/surahData';
 import { QuranApiResponse, Ayah, RootStackParamList } from '../types';
@@ -40,7 +39,7 @@ export default function VerseScreen({ navigation, route }: Props) {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [verseInputValue, setVerseInputValue] = useState('1');
   const soundRef = useRef<Audio.Sound | null>(null);
 
   const { markMemorized, unmarkMemorized, isMemorized, getMemorizedCount } = useMemorizationContext();
@@ -54,9 +53,10 @@ export default function VerseScreen({ navigation, route }: Props) {
     return () => { stopAndUnload(); };
   }, []);
 
-  // Stop audio when verse changes
+  // Stop audio and sync input when verse changes
   useEffect(() => {
     stopAndUnload();
+    setVerseInputValue(String(currentVerseIndex + 1));
   }, [currentVerseIndex]);
 
   useEffect(() => {
@@ -151,27 +151,12 @@ export default function VerseScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleDownload = async () => {
-    const ayah = arabicAyahs[currentVerseIndex];
-    if (!ayah) return;
-    setIsDownloading(true);
-    try {
-      const fileName = `surah_${surahNumber}_ayah_${ayah.numberInSurah}.mp3`;
-      const localUri = `${FileSystem.cacheDirectory}${fileName}`;
-      await FileSystem.downloadAsync(audioUrl(ayah.number), localUri);
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(localUri, {
-          mimeType: 'audio/mpeg',
-          dialogTitle: `Save ${surahMeta.englishName} — Verse ${ayah.numberInSurah}`,
-          UTI: 'public.mp3',
-        });
-      } else {
-        Alert.alert('Downloaded', fileName);
-      }
-    } catch {
-      Alert.alert('Error', 'Could not download audio.');
-    } finally {
-      setIsDownloading(false);
+  const handleVerseJump = () => {
+    const num = parseInt(verseInputValue, 10);
+    if (!isNaN(num) && num >= 1 && num <= arabicAyahs.length) {
+      setCurrentVerseIndex(num - 1);
+    } else {
+      setVerseInputValue(String(currentVerseIndex + 1));
     }
   };
 
@@ -275,33 +260,18 @@ export default function VerseScreen({ navigation, route }: Props) {
             </Text>
 
             {/* Audio controls */}
-            <View style={styles.audioRow}>
-              <TouchableOpacity
-                style={styles.playBtn}
-                onPress={handlePlayPause}
-                disabled={isLoadingAudio}
-                activeOpacity={0.7}
-              >
-                {isLoadingAudio ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.playBtnText}>{isPlaying ? '⏸ Pause' : '▶ Play'}</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.downloadBtn}
-                onPress={handleDownload}
-                disabled={isDownloading}
-                activeOpacity={0.7}
-              >
-                {isDownloading ? (
-                  <ActivityIndicator size="small" color="#2e7d32" />
-                ) : (
-                  <Text style={styles.downloadBtnText}>⬇ Download</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.playBtn}
+              onPress={handlePlayPause}
+              disabled={isLoadingAudio}
+              activeOpacity={0.7}
+            >
+              {isLoadingAudio ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.playBtnText}>{isPlaying ? '⏸  Pause Recitation' : '▶  Play Recitation'}</Text>
+              )}
+            </TouchableOpacity>
 
             <View style={styles.divider} />
 
@@ -323,9 +293,19 @@ export default function VerseScreen({ navigation, route }: Props) {
             </Text>
           </TouchableOpacity>
 
-          <Text style={styles.verseCounter}>
-            {currentVerseIndex + 1} / {arabicAyahs.length}
-          </Text>
+          <View style={styles.verseCounter}>
+            <TextInput
+              style={styles.verseInput}
+              value={verseInputValue}
+              onChangeText={setVerseInputValue}
+              onSubmitEditing={handleVerseJump}
+              onBlur={handleVerseJump}
+              keyboardType="number-pad"
+              returnKeyType="go"
+              selectTextOnFocus
+            />
+            <Text style={styles.verseTotal}>/ {arabicAyahs.length}</Text>
+          </View>
 
           <TouchableOpacity
             style={[styles.navBtn, currentVerseIndex === arabicAyahs.length - 1 && styles.navBtnDisabled]}
@@ -382,17 +362,11 @@ const styles = StyleSheet.create({
   memorisedTag: { backgroundColor: '#e8f5e9', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
   memorisedTagText: { fontSize: 11, color: '#2e7d32', fontWeight: '600' },
   arabicText: { fontSize: 28, lineHeight: 52, textAlign: 'right', color: '#1a1a1a', fontWeight: '400', writingDirection: 'rtl' },
-  audioRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
   playBtn: {
-    flex: 1, backgroundColor: '#2e7d32', borderRadius: 10,
-    paddingVertical: 10, alignItems: 'center', justifyContent: 'center', minHeight: 40,
+    backgroundColor: '#2e7d32', borderRadius: 10, marginTop: 16,
+    paddingVertical: 11, alignItems: 'center', justifyContent: 'center',
   },
   playBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  downloadBtn: {
-    flex: 1, borderWidth: 1.5, borderColor: '#2e7d32', borderRadius: 10,
-    paddingVertical: 10, alignItems: 'center', justifyContent: 'center', minHeight: 40,
-  },
-  downloadBtnText: { color: '#2e7d32', fontWeight: '700', fontSize: 14 },
   divider: { height: 1, backgroundColor: '#e8f5e9', marginVertical: 16 },
   translationLabel: { fontSize: 11, color: '#888', fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 },
   englishText: { fontSize: 16, lineHeight: 26, color: '#333', fontStyle: 'italic' },
@@ -402,7 +376,14 @@ const styles = StyleSheet.create({
   navBtnDisabled: { borderColor: '#ccc' },
   navBtnText: { color: '#2e7d32', fontWeight: '600', fontSize: 13 },
   navBtnTextDisabled: { color: '#ccc' },
-  verseCounter: { fontSize: 13, color: '#666', fontWeight: '500' },
+  verseCounter: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  verseInput: {
+    fontSize: 15, fontWeight: '700', color: '#1a3a2a',
+    borderWidth: 1.5, borderColor: '#2e7d32', borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 4,
+    minWidth: 44, textAlign: 'center',
+  },
+  verseTotal: { fontSize: 13, color: '#666', fontWeight: '500' },
   memoriseBtn: {
     backgroundColor: '#2e7d32', borderRadius: 12, paddingVertical: 15, alignItems: 'center',
     shadowColor: '#2e7d32', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
