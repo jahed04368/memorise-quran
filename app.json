@@ -15,6 +15,9 @@
     },
     "ios": {
       "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      },
       "splash": {
         "image": "./assets/icon.png",
         "imageWidth": 200,
@@ -23,6 +26,7 @@
       }
     },
     "android": {
+      "permissions": ["FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a3a2a"

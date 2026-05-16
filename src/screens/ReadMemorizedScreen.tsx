@@ -71,7 +71,11 @@ export default function ReadMemorizedScreen({ navigation, route }: Props) {
     await stopAndUnload();
     setLoadingAyah(ayah.number);
     try {
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+      });
       const { sound } = await Audio.Sound.createAsync(
         { uri: url },
         { shouldPlay: true },

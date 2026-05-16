@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Audio, AVPlaybackStatus } from 'expo-av';
@@ -40,8 +40,10 @@ export default function VerseScreen({ navigation, route }: Props) {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [isRepeating, setIsRepeating] = useState(false);
   const [verseInputValue, setVerseInputValue] = useState('1');
   const soundRef = useRef<Audio.Sound | null>(null);
+  const isRepeatingRef = useRef(false);
 
   const { markMemorized, unmarkMemorized, isMemorized, getMemorizedCount } = useMemorizationContext();
 
@@ -54,8 +56,10 @@ export default function VerseScreen({ navigation, route }: Props) {
     return () => { stopAndUnload(); };
   }, []);
 
-  // Stop audio and sync input when verse changes
+  // Stop audio, clear repeat, and sync input when verse changes
   useEffect(() => {
+    isRepeatingRef.current = false;
+    setIsRepeating(false);
     stopAndUnload();
     setVerseInputValue(String(currentVerseIndex + 1));
   }, [currentVerseIndex]);
@@ -121,6 +125,39 @@ export default function VerseScreen({ navigation, route }: Props) {
     }
   };
 
+  const playAudio = async (ayah: Ayah) => {
+    await stopAndUnload();
+    setIsLoadingAudio(true);
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+      });
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUrl(ayah.number) },
+        { shouldPlay: true },
+        (status: AVPlaybackStatus) => {
+          if (status.isLoaded && status.didJustFinish) {
+            if (isRepeatingRef.current && soundRef.current) {
+              soundRef.current.replayAsync().catch(() => {});
+            } else {
+              setIsPlaying(false);
+            }
+          }
+        }
+      );
+      soundRef.current = sound;
+      setIsPlaying(true);
+    } catch {
+      Alert.alert('Error', 'Could not load audio. Check your connection.');
+      isRepeatingRef.current = false;
+      setIsRepeating(false);
+    } finally {
+      setIsLoadingAudio(false);
+    }
+  };
+
   const handlePlayPause = async () => {
     const ayah = arabicAyahs[currentVerseIndex];
     if (!ayah) return;
@@ -137,25 +174,23 @@ export default function VerseScreen({ navigation, route }: Props) {
       return;
     }
 
-    setIsLoadingAudio(true);
-    try {
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: audioUrl(ayah.number) },
-        { shouldPlay: true },
-        (status: AVPlaybackStatus) => {
-          if (status.isLoaded && status.didJustFinish) {
-            setIsPlaying(false);
-          }
-        }
-      );
-      soundRef.current = sound;
-      setIsPlaying(true);
-    } catch {
-      Alert.alert('Error', 'Could not load audio. Check your connection.');
-    } finally {
-      setIsLoadingAudio(false);
+    await playAudio(ayah);
+  };
+
+  const handleRepeat = async () => {
+    const ayah = arabicAyahs[currentVerseIndex];
+    if (!ayah) return;
+
+    if (isRepeating) {
+      isRepeatingRef.current = false;
+      setIsRepeating(false);
+      await stopAndUnload();
+      return;
     }
+
+    isRepeatingRef.current = true;
+    setIsRepeating(true);
+    await playAudio(ayah);
   };
 
   const handleVerseJump = () => {
@@ -267,18 +302,35 @@ export default function VerseScreen({ navigation, route }: Props) {
             </Text>
 
             {/* Audio controls */}
-            <TouchableOpacity
-              style={styles.playBtn}
-              onPress={handlePlayPause}
-              disabled={isLoadingAudio}
-              activeOpacity={0.7}
-            >
-              {isLoadingAudio ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.playBtnText}>{isPlaying ? '⏸  Pause Recitation' : '▶  Play Recitation'}</Text>
-              )}
-            </TouchableOpacity>
+            <View style={styles.audioRow}>
+              <TouchableOpacity
+                style={[styles.playBtn, styles.playBtnFlex]}
+                onPress={handlePlayPause}
+                disabled={isLoadingAudio}
+                activeOpacity={0.7}
+              >
+                {isLoadingAudio && !isRepeating ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.playBtnText}>{isPlaying ? '⏸  Pause' : '▶  Play'}</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.repeatBtn, isRepeating && styles.repeatBtnActive]}
+                onPress={handleRepeat}
+                disabled={isLoadingAudio && !isRepeating}
+                activeOpacity={0.7}
+              >
+                {isLoadingAudio && isRepeating ? (
+                  <ActivityIndicator size="small" color={isRepeating ? '#fff' : '#2e7d32'} />
+                ) : (
+                  <Text style={[styles.repeatBtnText, isRepeating && styles.repeatBtnTextActive]}>
+                    🔁 Repeat{isRepeating ? ' (on)' : ''}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.divider} />
 
@@ -369,11 +421,21 @@ const styles = StyleSheet.create({
   memorisedTag: { backgroundColor: '#e8f5e9', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
   memorisedTagText: { fontSize: 11, color: '#2e7d32', fontWeight: '600' },
   arabicText: { fontSize: 28, lineHeight: 52, textAlign: 'right', color: '#1a1a1a', fontWeight: '400', writingDirection: 'rtl' },
+  audioRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
   playBtn: {
-    backgroundColor: '#2e7d32', borderRadius: 10, marginTop: 16,
+    backgroundColor: '#2e7d32', borderRadius: 10,
     paddingVertical: 11, alignItems: 'center', justifyContent: 'center',
   },
+  playBtnFlex: { flex: 1 },
   playBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  repeatBtn: {
+    borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: '#2e7d32',
+  },
+  repeatBtnActive: { backgroundColor: '#ff8f00', borderColor: '#ff8f00' },
+  repeatBtnText: { color: '#2e7d32', fontWeight: '700', fontSize: 14 },
+  repeatBtnTextActive: { color: '#fff' },
   divider: { height: 1, backgroundColor: '#e8f5e9', marginVertical: 16 },
   translationLabel: { fontSize: 11, color: '#888', fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 },
   englishText: { fontSize: 16, lineHeight: 26, color: '#333', fontStyle: 'italic' },
